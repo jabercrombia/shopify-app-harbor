@@ -1,7 +1,3 @@
-Certainly! Here's the updated **README** without the "Getting Started" section:
-
----
-
 # Next.js Shopify Integration
 
 This project integrates **Shopify** with a **Next.js** application, allowing you to fetch products from a Shopify store and display them on a dynamic product page. The project is built using **Next.js 13+** with the **App Directory**, making use of **Server Components** for data fetching.
