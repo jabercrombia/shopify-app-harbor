@@ -10,7 +10,6 @@ export default async function Home() {
       <div className="container mx-auto">
         <ProductList products={products} />
       </div>
-
     </div>
   );
 }

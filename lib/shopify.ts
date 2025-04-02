@@ -1,5 +1,7 @@
 import { ShopifyProductsResponse, ProductNode } from "@/types/shopify";
 
+const SHOPIFY_STORE_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN;
+const SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
 
 export async function getProducts(): Promise<ProductNode[]> {
     const query = `
@@ -43,11 +45,11 @@ export async function getProducts(): Promise<ProductNode[]> {
 
     `;
   
-    const response = await fetch(`https://${process.env.SHOPIFY_STORE_DOMAIN}.myshopify.com/api/2025-01/graphql.json`, {
+    const response = await fetch(`https://${SHOPIFY_STORE_DOMAIN}.myshopify.com/api/2025-01/graphql.json`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-Shopify-Storefront-Access-Token": process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN,
+        "X-Shopify-Storefront-Access-Token": SHOPIFY_ACCESS_TOKEN || "",
       },
       body: JSON.stringify({ query }),
     });
@@ -61,9 +63,61 @@ export async function getProducts(): Promise<ProductNode[]> {
       console.error("Error: Unexpected API response structure", json);
       return [];
     }
-  
-    return json.data.products.edges.map(edge => edge.node);
+
+    return json.data.products.edges.map((edge: { node: ProductNode }) => edge.node);
   }
+
+
+
+  export async function getAllProductHandles(): Promise<ProductNode[]> {
+    const response = await fetch(`https://${SHOPIFY_STORE_DOMAIN}.myshopify.com/api/2024-01/graphql.json`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Shopify-Storefront-Access-Token": SHOPIFY_ACCESS_TOKEN || "",
+      },
+      body: JSON.stringify({
+        query: `
+          {
+            products(first: 10) {
+              edges {
+                node {
+                  handle
+                }
+              }
+            }
+          }
+        `,
+      }),
+    });
+  
+    const json = await response.json();
+    return json.data.products.edges.map((edge: any) => edge.node.handle);
+  }
+
+
+// sitename
+export async function getSiteName(): Promise<string> {
+  const query = `
+    query {
+      shop {
+        name
+      }
+    }
+  `;
+
+  const response = await fetch(`https://${SHOPIFY_STORE_DOMAIN}.myshopify.com/api/2024-01/graphql.json`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(SHOPIFY_ACCESS_TOKEN && { 'X-Shopify-Storefront-Access-Token': SHOPIFY_ACCESS_TOKEN }),
+    },
+    body: JSON.stringify({ query }),
+  });
+  const json = await response.json();
+  console.log(json);
+  return json.data.shop.name;
+}
   
 // lib/shopify.ts
 export async function getProductByHandle(handle: string) {
@@ -107,16 +161,43 @@ export async function getProductByHandle(handle: string) {
       }
     `;
   
-    const response = await fetch(`https://${process.env.SHOPIFY_STORE_DOMAIN}.myshopify.com/api/2024-01/graphql.json`, {
+    const response = await fetch(`https://${SHOPIFY_STORE_DOMAIN}.myshopify.com/api/2024-01/graphql.json`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Shopify-Storefront-Access-Token': process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN,
+        ...(SHOPIFY_ACCESS_TOKEN ? { 'X-Shopify-Storefront-Access-Token': SHOPIFY_ACCESS_TOKEN } : {}),
       },
       body: JSON.stringify({ query }),
     });
-  
-    const data = await response.json();
-    return data.data.product;
+    const json = await response.json();
+    return json.data.product;
   }
-  
+
+// navigation
+export async function getNavigation(): Promise<{ id: string; title: string; handle: string }[]> {
+  const query = `
+    query {
+      collections(first: 10) {
+        edges {
+          node {
+            id
+            title
+            handle
+          }
+        }
+      }
+    }
+  `;
+
+  const response = await fetch(`https://${SHOPIFY_STORE_DOMAIN}.myshopify.com/api/2024-01/graphql.json`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Shopify-Storefront-Access-Token': SHOPIFY_ACCESS_TOKEN,
+    },
+    body: JSON.stringify({ query }),
+  }).then(res => res.text());
+  const jsonData = JSON.parse(response); 
+  const nav = jsonData.data.collections.edges.map((str: { node: string }) => str.node);
+  return nav;
+}

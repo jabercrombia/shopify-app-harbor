@@ -1,0 +1,10 @@
+nav {
+    padding: 10px 0;
+    li {
+        display: inline;
+        margin-right: 10px;
+        &:hover {
+            color:gray;
+        }
+    }
+}
