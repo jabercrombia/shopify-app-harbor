@@ -94,84 +94,77 @@ export async function getProducts(): Promise<ProductNode[]> {
     const json = await response.json();
     return json.data.products.edges.map((edge: any) => edge.node.handle);
   }
-
-
-// sitename
-export async function getSiteName(): Promise<string> {
-  const query = `
-    query {
-      shop {
-        name
-      }
-    }
-  `;
-
-  const response = await fetch(`https://${SHOPIFY_STORE_DOMAIN}.myshopify.com/api/2024-01/graphql.json`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(SHOPIFY_ACCESS_TOKEN && { 'X-Shopify-Storefront-Access-Token': SHOPIFY_ACCESS_TOKEN }),
-    },
-    body: JSON.stringify({ query }),
-  });
-  const json = await response.json();
-  console.log(json);
-  return json.data.shop.name;
-}
   
 // lib/shopify.ts
 export async function getProductByHandle(handle: string) {
-    const query = `
-      query {
-        product(handle: "${handle}") {
-            id
-            title
-            handle
-            description
-            priceRange {
-                minVariantPrice {
-                amount
-                currencyCode
-                }
-            }
-        media(first: 5) {
-            edges {
-                node {
-                ... on MediaImage {
-                    image {
-                    url (transform: {maxWidth: 800, maxHeight: 800})
-                    altText
-                    }
-                }
-                }
-            }
+  const query = `
+    query {
+      product(handle: "${handle}") {
+        id
+        title
+        handle
+        description
+        priceRange {
+            minVariantPrice {
+            amount
+            currencyCode
+          }
         }
-        variants(first: 1) {
-            edges {
-              node {
-                id
-                priceV2 {
-                  amount
-                  currencyCode
+        collections(first: 5) {  # Fetch collections the product belongs to
+          edges {
+            node {
+              id
+              title
+            }
+          }
+        }
+        media(first: 5) {
+          edges {
+            node {
+            ... on MediaImage {
+                image {
+                  url (transform: {maxWidth: 800, maxHeight: 800})
+                  altText
                 }
               }
             }
           }
         }
+        variants(first: 10) {
+          edges {
+            node {
+              id
+              title
+              priceV2 {
+                amount
+                currencyCode
+              }
+              price {
+                amount
+              }
+            }
+          }
+        }
       }
-    `;
-  
-    const response = await fetch(`https://${SHOPIFY_STORE_DOMAIN}.myshopify.com/api/2024-01/graphql.json`, {
-      method: 'POST',
+    }
+  `;
+
+  const response = await fetch(
+    `https://${SHOPIFY_STORE_DOMAIN}.myshopify.com/api/2024-01/graphql.json`,
+    {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        ...(SHOPIFY_ACCESS_TOKEN ? { 'X-Shopify-Storefront-Access-Token': SHOPIFY_ACCESS_TOKEN } : {}),
+        "Content-Type": "application/json",
+        ...(SHOPIFY_ACCESS_TOKEN
+          ? { "X-Shopify-Storefront-Access-Token": SHOPIFY_ACCESS_TOKEN }
+          : {}),
       },
       body: JSON.stringify({ query }),
-    });
-    const json = await response.json();
-    return json.data.product;
-  }
+    }
+  );
+  const json = await response.json();
+  return json.data.product;
+}
 
 // navigation
 export async function getNavigation(): Promise<{ id: string; title: string; handle: string }[]> {

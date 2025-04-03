@@ -1,9 +1,11 @@
 import React from 'react';
+import Link from 'next/link'
 interface Product {
   id: string;
   title: string;
   descriptionHtml: string;
   imageSrc: string;
+  handle: string; // Added handle property
 }
 
 interface CollectionData {
@@ -36,6 +38,7 @@ export default async function CollectionPage({ params }: { params: { handle: str
             node {
               id
               title
+              handle
               descriptionHtml
               images(first: 1) {
                 edges {
@@ -78,6 +81,7 @@ export default async function CollectionPage({ params }: { params: { handle: str
     descriptionHtml: data.collectionByHandle.descriptionHtml,
     products: data.collectionByHandle.products.edges.map((edge: any) => ({
       id: edge.node.id,
+      handle: edge.node.handle,
       title: edge.node.title,
       descriptionHtml: edge.node.descriptionHtml,
       imageSrc: edge.node.images.edges[0]?.node.src || '',
@@ -90,13 +94,13 @@ export default async function CollectionPage({ params }: { params: { handle: str
       <div dangerouslySetInnerHTML={{ __html: collection.descriptionHtml }} />
       
       <div>
-        <h2>Products</h2>
         <div className="product-list flex">
           {collection.products.map((product: Product) => (
             <div key={product.id} className="product w-1/4 mx-[10px]">
-              
+                    <Link href={`/product/${product.handle}`}>
               {product.imageSrc && <img src={product.imageSrc} alt={product.title} />}
               <h3>{product.title}</h3>
+              </Link>
               <div dangerouslySetInnerHTML={{ __html: product.descriptionHtml }} />
             </div>
           ))}
