@@ -1,50 +1,57 @@
-"use client"; // Required to use React hooks in Next.js
+"use client";
 
-import { useState, useEffect } from "react";
-import { addToCart, createCart } from "../lib/shopify";
-
-interface AddToCartButtonProps {
-  variantId: string;
-}
-
-
-export default function AddToCartButton({ variantId }: AddToCartButtonProps) {
-  const [cartId, setCartId] = useState<string | null>(null);
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+export function AddToCartButton({ variantId, quantity }: { variantId: string; quantity: number }) {
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    const existingCartId = localStorage.getItem("shopify_cart_id");
-    if (!existingCartId) {
-      createCart().then((id) => {
-        localStorage.setItem("shopify_cart_id", id);
-        setCartId(id);
-      });
-    } else {
-      setCartId(existingCartId);
-    }
-  }, []);
+  const [error, setError] = useState("");
 
   const handleAddToCart = async () => {
-    if (!cartId) return;
+    if (!variantId) {
+      setError("Error: No variant selected.");
+      return;
+    }
 
     setLoading(true);
-    await addToCart(cartId, variantId, 1);
-    setLoading(false);
-    setMessage("✅ Added to cart!");
+    setError("");
+
+    try {
+      const response = await fetch("/api/cart", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          variantId,
+          quantity,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to add to cart.");
+      }
+
+      console.log("Added to cart:", data);
+    } catch (err: any) {
+      console.error("Add to Cart Error:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div>
-      <button
+      <Button
         onClick={handleAddToCart}
         disabled={loading}
-        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400"
+        className="bg-blue-500 text-white px-4 py-2 rounded-md mt-2"
       >
         {loading ? "Adding..." : "Add to Cart"}
-      </button>
-
-      {message && <p className="mt-2 text-green-600">{message}</p>}
+      </Button>
+      {error && <p className="text-red-500">{error}</p>}
     </div>
   );
 }

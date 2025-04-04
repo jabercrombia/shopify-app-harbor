@@ -135,12 +135,14 @@ export async function getProductByHandle(handle: string) {
             node {
               id
               title
+              availableForSale
               priceV2 {
                 amount
                 currencyCode
               }
               price {
                 amount
+                currencyCode
               }
             }
           }
@@ -194,3 +196,31 @@ export async function getNavigation(): Promise<{ id: string; title: string; hand
   const nav = jsonData.data.collections.edges.map((str: { node: string }) => str.node);
   return nav;
 }
+
+// add to cart
+// lib/shopify.ts
+export const shopifyFetch = async (query: string, variables: any = {}) => {
+  const SHOPIFY_STORE_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN;
+
+  const url = `https://${SHOPIFY_STORE_DOMAIN}.myshopify.com/api/2024-01/graphql.json`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Shopify-Storefront-Access-Token': SHOPIFY_ACCESS_TOKEN,
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch from Shopify API: ${response.statusText}`);
+  }
+
+  const { data, errors } = await response.json();
+  if (errors) {
+    throw new Error(errors.map((error: any) => error.message).join(', '));
+  }
+
+  return data;
+};

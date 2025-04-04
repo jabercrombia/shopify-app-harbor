@@ -17,7 +17,7 @@ import {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>{data.category}</BreadcrumbPage>
+            <BreadcrumbLink href={`/collections/${data.category}`}>{data.category}</BreadcrumbLink>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
