@@ -89,7 +89,7 @@ export default async function CollectionPage({ params }: { params: { handle: str
   };
 
   return (
-    <div className='container mx-auto'>
+    <div>
       <h1>{collection.title}</h1>
       <div dangerouslySetInnerHTML={{ __html: collection.descriptionHtml }} />
       
